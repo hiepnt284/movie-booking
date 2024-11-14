@@ -32,5 +32,17 @@ public class Booking {
 
     BookingStatus status;
 
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<FoodBooking> foodBookingList;
+
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<SeatBooking> seatBookingList;
+
     String showSeatNumberList;
+
+    String bookingCode;
+
+    String qrCode;
+
+    Boolean isUsed;
 }

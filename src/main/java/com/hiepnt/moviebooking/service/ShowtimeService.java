@@ -51,9 +51,9 @@ public class ShowtimeService {
                 ShowSeatResponse.builder()
                         .id(showSeat.getId())
                         .showSeatStatus(showSeat.getShowSeatStatus())
-                        .seatTypeName(showSeat.getRoomSeat().getSeatType().getName())
-                        .seatRow(showSeat.getRoomSeat().getSeatRow())
-                        .number(showSeat.getRoomSeat().getNumber())
+                        .seatTypeName(showSeat.getSeatTypeName())
+                        .seatRow(showSeat.getSeatRow())
+                        .number(showSeat.getNumber())
                         .price(showSeat.getPrice())
                         .build()
         ).toList();
@@ -70,7 +70,7 @@ public class ShowtimeService {
                 .showSeatResponseList(showSeatResponseList)
                 .build();
     }
-
+    @Transactional
     public List<AvailableDateResponse> getAvailableDatesForMovieFromToday(int movieId) {
         List<LocalDate> availableDates = showTimeRepository.findDistinctDatesByMovieIdAndFromToday(movieId, LocalDate.now(), LocalTime.now());
 
@@ -92,16 +92,16 @@ public class ShowtimeService {
 
     // Phương thức để lấy tên thứ bằng tiếng Việt
     private String getDayOfWeekName(DayOfWeek dayOfWeek) {
-        switch (dayOfWeek) {
-            case MONDAY: return "Thứ hai";
-            case TUESDAY: return "Thứ ba";
-            case WEDNESDAY: return "Thứ tư";
-            case THURSDAY: return "Thứ năm";
-            case FRIDAY: return "Thứ sáu";
-            case SATURDAY: return "Thứ bảy";
-            case SUNDAY: return "Chủ nhật";
-            default: return "";
-        }
+        return switch (dayOfWeek) {
+            case MONDAY -> "Thứ hai";
+            case TUESDAY -> "Thứ ba";
+            case WEDNESDAY -> "Thứ tư";
+            case THURSDAY -> "Thứ năm";
+            case FRIDAY -> "Thứ sáu";
+            case SATURDAY -> "Thứ bảy";
+            case SUNDAY -> "Chủ nhật";
+            default -> "";
+        };
     }
     @Transactional
     public List<ShowtimeForUserResponse> getAllByUser(int movieId, LocalDate date) {
@@ -189,7 +189,6 @@ public class ShowtimeService {
 
 
 
-
     @Transactional
     public List<ShowtimeByRoomResponse> getAllByAdmin(int theaterId, LocalDate date) {
         List<Room> listRoom = roomRepository.findByTheater(Theater.builder().id(theaterId).build());
@@ -219,9 +218,9 @@ public class ShowtimeService {
                         .build()
         ).toList();
     }
-
     @Transactional
     public int create(ShowtimeCreationDto showtimeCreationDto) {
+
         Movie movie = movieRepository.findById(showtimeCreationDto.getMovieId())
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_EXISTED));
         Room room = roomRepository.findById(showtimeCreationDto.getRoomId())
@@ -229,6 +228,18 @@ public class ShowtimeService {
 
         var duration = movie.getDuration();
         var timeEnd = showtimeCreationDto.getTimeStart().plusMinutes(duration).plusMinutes(15);
+
+        // Kiểm tra xung đột thời gian
+        List<Showtime> conflictingShowtimes = showTimeRepository.findConflictingShowtimes(
+                showtimeCreationDto.getRoomId(),
+                showtimeCreationDto.getDate(),
+                showtimeCreationDto.getTimeStart(),
+                timeEnd
+        );
+
+        if (!conflictingShowtimes.isEmpty()) {
+            throw new AppException(ErrorCode.INVALID_INPUT_DATA);
+        }
 
         DayOfWeek dayOfWeek = showtimeCreationDto.getDate().getDayOfWeek();
 
@@ -251,7 +262,9 @@ public class ShowtimeService {
         var listShowSeat = room.getRoomSeats().stream().map(roomSeat ->
                 ShowSeat.builder()
                         .showtime(savedShowtime)
-                        .roomSeat(roomSeat)
+                        .seatTypeName(roomSeat.getSeatType().getName())
+                        .seatRow(roomSeat.getSeatRow())
+                        .number(roomSeat.getNumber())
                         .price(dayPrice.getBasePrice() + roomSeat.getSeatType().getExtraPrice() + extraPriceRoom)
                         .build()
 
@@ -260,9 +273,8 @@ public class ShowtimeService {
 
         return savedShowtime.getId();
     }
-
+    @Transactional
     // Lấy một suất chiếu theo ID
-    @Transactional(readOnly = true)
     public ShowtimeResponse getById(int showtimeId) {
         Showtime showtime = showTimeRepository.findById(showtimeId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_EXISTED));
@@ -276,9 +288,8 @@ public class ShowtimeService {
                 .isActive(showtime.getIsActive())
                 .build();
     }
-
-    // Cập nhật thông tin suất chiếu
     @Transactional
+    // Cập nhật thông tin suất chiếu
     public void updateShowtime(int showtimeId, ShowtimeUpdateDto showtimeUpdateDto) {
         Showtime showtime = showTimeRepository.findById(showtimeId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_EXISTED));
@@ -296,9 +307,8 @@ public class ShowtimeService {
 
         showTimeRepository.save(showtime);
     }
-
-    // Xóa một suất chiếu theo ID
     @Transactional
+    // Xóa một suất chiếu theo ID
     public void deleteShowtime(int showtimeId) {
         Showtime showtime = showTimeRepository.findById(showtimeId)
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_EXISTED));

@@ -1,23 +1,22 @@
 package com.hiepnt.moviebooking.dto.request;
 
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookingRequest {
-    int userId;
-    double totalPrice;
-    int showtimeId;
-    List<Integer> listShowSeatId;
-    String listShowSeatNumber;
-    List<FoodBookingRequest> foodBookingRequestList;
+public class UpdatePasswordDto {
+    String oldPassword;
+
+    @Size(min = 6, message = "The password must have a minimum length of 6 characters")
+    String newPassword;
+
+    String confirmPassword;
 }

@@ -4,8 +4,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.util.List;
-
 @Entity
 @Getter
 @Setter
@@ -13,18 +11,17 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Theater {
+public class Post {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
-    @Column(unique = true)
-    String name;
-    String address;
-    String email;
-    String phone;
-    @Column(length = 1000)
-    String description;
-    String img;
-    @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Room> rooms;
+
+    String title;
+
+    String thumbnail;
+    @Lob
+    @Column(columnDefinition = "TEXT")
+    String content;
+
+    Boolean isActive;
 }

@@ -25,7 +25,9 @@ public enum ErrorCode {
     UNVERIFIED_ACCOUNT(1203, "Your account is not verified", HttpStatus.BAD_REQUEST),
     FORBIDDEN_ACCOUNT(1204, "Your account has been banned", HttpStatus.BAD_REQUEST),
     FAIL_TO_SEND_OTP(1301, "Unable to send OTP, please try again", HttpStatus.INTERNAL_SERVER_ERROR),
-    INVALID_OTP(1302, "Invalid otp", HttpStatus.BAD_REQUEST);
+    INVALID_OTP(1302, "Invalid otp", HttpStatus.BAD_REQUEST),
+
+    UNAVAILABLE_SEAT(1400, "unavailable seat", HttpStatus.BAD_REQUEST);
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
         this.code = code;

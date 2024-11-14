@@ -2,13 +2,14 @@ package com.hiepnt.moviebooking.payment.vnpay;
 
 import com.hiepnt.moviebooking.config.payment.VNPAYConfig;
 import com.hiepnt.moviebooking.dto.request.BookingRequest;
-import com.hiepnt.moviebooking.entity.Booking;
-import com.hiepnt.moviebooking.entity.Showtime;
-import com.hiepnt.moviebooking.entity.User;
+import com.hiepnt.moviebooking.dto.request.FoodBookingRequest;
+import com.hiepnt.moviebooking.entity.*;
 import com.hiepnt.moviebooking.entity.enums.BookingStatus;
 import com.hiepnt.moviebooking.entity.enums.ShowSeatStatus;
-import com.hiepnt.moviebooking.repository.BookingRepository;
-import com.hiepnt.moviebooking.repository.ShowSeatRepository;
+import com.hiepnt.moviebooking.exception.AppException;
+import com.hiepnt.moviebooking.exception.ErrorCode;
+import com.hiepnt.moviebooking.repository.*;
+import com.hiepnt.moviebooking.util.OtpUtil;
 import com.hiepnt.moviebooking.util.VNPayUtil;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.AccessLevel;
@@ -16,9 +17,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Service
@@ -31,18 +34,37 @@ public class PaymentService {
 
     ShowSeatRepository showSeatRepository;
 
+    SeatBookingRepository seatBookingRepository;
 
-    public VNPayResponse createVnPayPayment(BookingRequest brequest, HttpServletRequest request) {
-        String vnp_ReturnUrl = "http://localhost:8080/payment/vn-pay-callback";
-        long amount = (int)(brequest.getTotalPrice()) * 100L;
-        int userId = brequest.getUserId();
-        LocalDateTime bookingDate = brequest.getBookingDate();
-        int showtimeId = brequest.getShowtimeId();
-        String listShowSeatNumber = brequest.getListShowSeatNumber();
-        var listShowSeatId = brequest.getListShowSeatId();
+    FoodBookingRepository foodBookingRepository;
+
+    FoodRepository foodRepository;
+
+
+
+    @Transactional
+    public VNPayResponse createVnPayPayment(BookingRequest bookingRequest, HttpServletRequest request) {
+
+        List<Integer> listShowSeatId = bookingRequest.getListShowSeatId();
+
+        for (int showSeatId : listShowSeatId) {
+            var showSeat = showSeatRepository.findById(showSeatId)
+                    .orElseThrow(()-> new AppException(ErrorCode.NOT_EXISTED));
+            if (!showSeat.getShowSeatStatus().equals(ShowSeatStatus.AVAILABLE))
+                throw new AppException(ErrorCode.UNAVAILABLE_SEAT);
+        }
+
+
+        long amount = (int)(bookingRequest.getTotalPrice()) * 100L;
+        int userId = bookingRequest.getUserId();
+        LocalDateTime bookingDate = LocalDateTime.now();
+        int showtimeId = bookingRequest.getShowtimeId();
+        String listShowSeatNumber = bookingRequest.getListShowSeatNumber();
+        List<FoodBookingRequest> foodBookingRequestList = bookingRequest.getFoodBookingRequestList();
+
 
         Booking booking = Booking.builder()
-                .totalPrice(brequest.getTotalPrice())
+                .totalPrice(bookingRequest.getTotalPrice())
                 .user(User.builder().id(userId).build())
                 .bookingDate(bookingDate)
                 .showtime(Showtime.builder().id(showtimeId).build())
@@ -50,29 +72,41 @@ public class PaymentService {
                 .status(BookingStatus.PENDING)
                 .build();
 
-        int bookingId = bookingRepository.save(booking).getId();
+        var saveBooking = bookingRepository.save(booking);
+        int bookingId = saveBooking.getId();
+
 
         for (int showSeatId : listShowSeatId) {
-            var showSeat = showSeatRepository.findById(showSeatId);
-            if (showSeat.isPresent()) {
-                showSeat.get().setShowSeatStatus(ShowSeatStatus.BOOKED);
-                showSeatRepository.save(showSeat.get());
-            } else {
-                // Xử lý trường hợp showSeat không tồn tại
-                throw new RuntimeException("ShowSeat with id " + showSeatId + " not found.");
-            }
+            var showSeat = showSeatRepository.findById(showSeatId)
+                    .orElseThrow(()-> new AppException(ErrorCode.NOT_EXISTED));
+            showSeat.setShowSeatStatus(ShowSeatStatus.SELECTED);
+            showSeatRepository.save(showSeat);
+            var seatBooking = SeatBooking.builder().showSeatId(showSeatId).booking(saveBooking).build();
+            seatBookingRepository.save(seatBooking);
+        }
+
+        for(FoodBookingRequest foodBookingRequest: foodBookingRequestList){
+            var food = foodRepository.findById(foodBookingRequest.getFoodId())
+                    .orElseThrow(()-> new AppException(ErrorCode.NOT_EXISTED));
+            var foodBooking = FoodBooking.builder()
+                    .name(food.getName())
+                    .price(food.getPrice())
+                    .quantity(foodBookingRequest.getQuantity())
+                    .booking(saveBooking)
+                    .build();
+            foodBookingRepository.save(foodBooking);
         }
 
 
-
-        String bankCode = request.getParameter("bankCode");
+        String vnp_ReturnUrl = "http://localhost:8080/payment/vn-pay-callback";
+//        String bankCode = request.getParameter("bankCode");
         Map<String, String> vnpParamsMap = vnPayConfig.getVNPayConfig();
         vnpParamsMap.put("vnp_Amount", String.valueOf(amount));
-        if (bankCode != null && !bankCode.isEmpty()) {
-            vnpParamsMap.put("vnp_BankCode", bankCode);
-        }
+//        if (bankCode != null && !bankCode.isEmpty()) {
+//            vnpParamsMap.put("vnp_BankCode", bankCode);
+//        }
         vnpParamsMap.put("vnp_IpAddr", VNPayUtil.getIpAddress(request));
-        vnpParamsMap.put("vnp_ReturnUrl", vnp_ReturnUrl);
+        vnpParamsMap.put("vnp_ReturnUrl", vnp_ReturnUrl+"?bookingId="+bookingId);
         //build query url
         String queryUrl = VNPayUtil.getPaymentURL(vnpParamsMap, true);
         String hashData = VNPayUtil.getPaymentURL(vnpParamsMap, false);

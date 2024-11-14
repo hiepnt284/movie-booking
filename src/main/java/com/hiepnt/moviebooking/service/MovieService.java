@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
@@ -41,8 +42,16 @@ public class MovieService {
         return movieMapper.toMovieResponse(movieRepository.save(movie));
     }
 
-    public List<MovieResponse> getAllMovieForUser(){
-        List<Movie> movieList = movieRepository.findByIsActiveTrue();
+    public List<MovieResponse> getNowShowing(){
+        List<Movie> movieList = movieRepository.findNowShowing(LocalDate.now());
+
+        return movieList.stream()
+                .map(movieMapper::toMovieResponse)
+                .toList();
+    }
+
+    public List<MovieResponse> getComingSoon(){
+        List<Movie> movieList = movieRepository.findComingSoon(LocalDate.now());
 
         return movieList.stream()
                 .map(movieMapper::toMovieResponse)
@@ -105,5 +114,13 @@ public class MovieService {
             movie.setPoster(posterUrl);
         }
         return movieMapper.toMovieResponse(movieRepository.save(movie));
+    }
+
+    public List<MovieResponse> getAllActive() {
+        List<Movie> movieList = movieRepository.findByIsActiveTrue();
+
+        return movieList.stream()
+                .map(movieMapper::toMovieResponse)
+                .toList();
     }
 }

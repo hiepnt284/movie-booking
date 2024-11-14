@@ -22,4 +22,14 @@ public interface ShowTimeRepository extends JpaRepository<Showtime,Integer> {
     List<LocalDate> findDistinctDatesByMovieIdAndFromToday(@Param("movieId") int movieId, @Param("today") LocalDate today, @Param("timeNow") LocalTime timeNow);
 
     List<Showtime> findByMovie_IdAndRoom_RoomType_IdAndRoom_Theater_IdAndDate(int movieId, Integer id, Integer id1, LocalDate date);
+
+    @Query("SELECT s FROM Showtime s WHERE s.room.id = :roomId AND s.date = :date " +
+            "AND ((:timeStart BETWEEN s.timeStart AND s.timeEnd) " +
+            "OR (:timeEnd BETWEEN s.timeStart AND s.timeEnd) " +
+            "OR (s.timeStart BETWEEN :timeStart AND :timeEnd) " +
+            "OR (s.timeEnd BETWEEN :timeStart AND :timeEnd))")
+    List<Showtime> findConflictingShowtimes(@Param("roomId") Integer roomId,
+                                            @Param("date") LocalDate date,
+                                            @Param("timeStart") LocalTime timeStart,
+                                            @Param("timeEnd") LocalTime timeEnd);
 }

@@ -1,10 +1,11 @@
 package com.hiepnt.moviebooking.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.util.List;
 
 @Entity
 @Getter
@@ -13,18 +14,12 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Theater {
+public class Carousel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     Integer id;
-    @Column(unique = true)
     String name;
-    String address;
-    String email;
-    String phone;
-    @Column(length = 1000)
-    String description;
     String img;
-    @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL, orphanRemoval = true)
-    List<Room> rooms;
+    String link;
+    Boolean isActive;
 }

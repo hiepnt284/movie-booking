@@ -36,11 +36,27 @@ public class MovieController {
                 .build();
     }
 
-    @GetMapping("/get")
-    public ApiResponse<List<MovieResponse>> getAllMovieForUser(){
+    @GetMapping("/now-showing")
+    public ApiResponse<List<MovieResponse>> getNowShowingMovie(){
         return ApiResponse
                 .<List<MovieResponse>>builder()
-                .result(movieService.getAllMovieForUser())
+                .result(movieService.getNowShowing())
+                .build();
+    }
+
+    @GetMapping("/coming-soon")
+    public ApiResponse<List<MovieResponse>> getComingSoonMovie(){
+        return ApiResponse
+                .<List<MovieResponse>>builder()
+                .result(movieService.getComingSoon())
+                .build();
+    }
+
+    @GetMapping("/active")
+    public ApiResponse<List<MovieResponse>> getAllActive(){
+        return ApiResponse
+                .<List<MovieResponse>>builder()
+                .result(movieService.getAllActive())
                 .build();
     }
 

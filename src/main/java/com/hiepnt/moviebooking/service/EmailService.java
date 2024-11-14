@@ -1,5 +1,6 @@
 package com.hiepnt.moviebooking.service;
 
+import com.hiepnt.moviebooking.dto.response.BookingResponse;
 import com.hiepnt.moviebooking.entity.enums.EmailType;
 import com.hiepnt.moviebooking.util.EncryptionUtil;
 import jakarta.mail.MessagingException;
@@ -51,6 +52,41 @@ public class EmailService {
                 """.formatted(otp), true);
         }
         emailSender.send(mimeMessage);
+    }
+
+    public void sendBookingInfo(BookingResponse bookingResponse) throws MessagingException {
+        MimeMessage mimeMessage = emailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true, "UTF-8");
+
+        helper.setTo(bookingResponse.getEmail());
+        helper.setSubject("Xác nhận đặt vé thành công");
+
+        String htmlContent = buildBookingEmailContent(bookingResponse);
+        helper.setText(htmlContent, true);
+
+        emailSender.send(mimeMessage);
+    }
+
+    private String buildBookingEmailContent(BookingResponse bookingResponse) {
+        return "<html><body>" +
+                "<h3 style='color: green;'>Đặt vé thành công!</h3>" +
+                "<p><strong>Khách hàng:</strong> " + bookingResponse.getUserName() + "</p>" +
+                "<p><strong>Tổng tiền:</strong> " + bookingResponse.getTotalPrice() + "</p>" +
+                "<p><strong>Thời gian thanh toán:</strong> " + bookingResponse.getBookingDate() + "</p>" +
+                "<p><strong>Phim:</strong> " + bookingResponse.getMovieTitle() + "</p>" +
+                "<p><strong>Thời gian:</strong> " + bookingResponse.getDate() + " " + bookingResponse.getTimeStart() + "</p>" +
+                "<p><strong>Rạp:</strong> " + bookingResponse.getTheaterName() + "</p>" +
+                "<p><strong>Phòng chiếu:</strong> " + bookingResponse.getRoomName() + "</p>" +
+                "<p><strong>Ghế:</strong> " + bookingResponse.getShowSeatNumberList() + "</p>" +
+                "<p><strong>Mã vé:</strong> " + bookingResponse.getBookingCode() + "</p>" +
+                "<h4>Đồ ăn:</h4>" +
+                "<ul>" +
+                bookingResponse.getFoodBookingList().stream()
+                        .map(item -> "<li>" + item.getQuantity() + " x " + item.getFoodName() + "</li>")
+                        .reduce((a, b) -> a + b).orElse("") +
+                "</ul>" +
+                "<p><img src='" + bookingResponse.getQrCode() + "' alt='QR Code' width='200'/></p>" +
+                "</body></html>";
     }
 
 }

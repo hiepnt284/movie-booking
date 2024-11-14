@@ -14,8 +14,13 @@ import java.util.List;
 @Repository
 public interface MovieRepository extends JpaRepository<Movie,Integer> {
     boolean existsByTitle(String title);
-
     List<Movie> findByIsActiveTrue();
+
+    @Query("SELECT m FROM Movie m WHERE m.releaseDate <= :currentDate AND m.isActive = true")
+    List<Movie> findNowShowing(@Param("currentDate") LocalDate currentDate);
+
+    @Query("SELECT m FROM Movie m WHERE m.releaseDate > :currentDate AND m.isActive = true")
+    List<Movie> findComingSoon(@Param("currentDate") LocalDate currentDate);
 
 
     @Query("SELECT m FROM Movie m WHERE LOWER(m.title) LIKE LOWER(CONCAT('%', :keyword, '%'))")

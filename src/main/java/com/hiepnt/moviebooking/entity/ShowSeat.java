@@ -21,13 +21,19 @@ public class ShowSeat {
 
     double price;
 
+    String seatTypeName;
+
+    String seatRow;
+
+    int number;
+
     @ManyToOne
     @JoinColumn(name = "show_time_id")
     Showtime showtime;
 
-    @ManyToOne
-    @JoinColumn(name = "room_seat_id")
-    private RoomSeat roomSeat;
+//    @ManyToOne
+//    @JoinColumn(name = "room_seat_id")
+//    private RoomSeat roomSeat;
 
 
 
