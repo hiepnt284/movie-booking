@@ -13,7 +13,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
-@Entity(name = "user")
+@Entity
 @Getter
 @Setter
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -60,6 +60,10 @@ public class User {
 
     @Builder.Default
     boolean isGgAccount = false;
+
+    @ManyToOne
+    @JoinColumn(name = "theater_id")
+    Theater theater;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     List<Token> tokens;

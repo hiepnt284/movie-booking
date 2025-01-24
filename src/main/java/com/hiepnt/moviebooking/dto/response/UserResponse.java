@@ -3,6 +3,7 @@ package com.hiepnt.moviebooking.dto.response;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.hiepnt.moviebooking.entity.enums.Gender;
 import com.hiepnt.moviebooking.entity.enums.Role;
+import com.hiepnt.moviebooking.entity.enums.Status;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -23,4 +24,6 @@ public class UserResponse {
     LocalDate dob;
     String avt;
     Role role;
+    Integer theaterId;
+    Status isActive;
 }

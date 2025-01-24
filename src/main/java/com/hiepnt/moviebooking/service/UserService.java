@@ -1,9 +1,11 @@
 package com.hiepnt.moviebooking.service;
 
+import com.hiepnt.moviebooking.common.PageResponse;
 import com.hiepnt.moviebooking.dto.request.UpdatePasswordDto;
 import com.hiepnt.moviebooking.dto.response.BookingItemResponse;
 import com.hiepnt.moviebooking.dto.response.UserResponse;
 import com.hiepnt.moviebooking.entity.User;
+import com.hiepnt.moviebooking.entity.enums.Status;
 import com.hiepnt.moviebooking.exception.AppException;
 import com.hiepnt.moviebooking.exception.ErrorCode;
 import com.hiepnt.moviebooking.mapper.UserMapper;
@@ -11,12 +13,17 @@ import com.hiepnt.moviebooking.repository.UserRepository;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -61,8 +68,10 @@ public class UserService {
                 .orElseThrow(() -> new AppException(ErrorCode.NOT_EXISTED));
         var listBooking = user.getBookings();
 
-        return listBooking.stream().map(booking->
-                BookingItemResponse.builder()
+        return listBooking.stream()
+                .sorted((b1, b2) -> b2.getBookingDate().compareTo(b1.getBookingDate())) // Sắp xếp giảm dần theo bookingDate
+                .limit(5) // Lấy 5 giao dịch mới nhất
+                .map(booking -> BookingItemResponse.builder()
                         .id(booking.getId())
                         .totalPrice(booking.getTotalPrice())
                         .bookingDate(booking.getBookingDate())
@@ -73,5 +82,53 @@ public class UserService {
                         .bookingCode(booking.getBookingCode())
                         .build()
                 ).toList();
+    }
+
+
+
+    public PageResponse<UserResponse> getAll(
+            int page,
+            int pageSize,
+            String sortBy,
+            String direction,
+            String keyword
+    ){
+        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by(Sort.Direction.fromString(direction), sortBy));
+        Page<User> userPage = userRepository.findByEmail(
+                (keyword == null || keyword.trim().isEmpty()) ? null : keyword,
+                "admin@gmail.com",
+                pageable
+        );
+
+        List<UserResponse> userResponseList = userPage.getContent().stream()
+                .map(user -> UserResponse.builder()
+                        .id(user.getId())
+                        .email(user.getEmail())
+                        .phoneNumber(user.getPhoneNumber())
+                        .fullName(user.getFullName())
+                        .gender(user.getGender())
+                        .dob(user.getDob())
+                        .avt(user.getAvt())
+                        .role(user.getRole())
+                        .theaterId(user.getTheater() != null ? user.getTheater().getId() : null)
+                        .isActive(user.getIsActive())
+                        .build())
+                .toList();
+
+        return PageResponse.<UserResponse>builder()
+                .content(userResponseList)
+                .totalElements(userPage.getTotalElements())
+                .totalPages(userPage.getTotalPages())
+                .pageNo(userPage.getNumber()+1)
+                .pageSize(userPage.getSize())
+                .build();
+    }
+
+    public String changeStatus(int id){
+        var user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.NOT_EXISTED));
+        user.setIsActive(user.getIsActive()== Status.ACTIVE?Status.BANNED:Status.ACTIVE);
+        userRepository.save(user);
+        return "Success";
     }
 }

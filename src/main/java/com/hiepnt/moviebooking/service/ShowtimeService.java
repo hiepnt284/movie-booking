@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -72,13 +73,15 @@ public class ShowtimeService {
     }
     @Transactional
     public List<AvailableDateResponse> getAvailableDatesForMovieFromToday(int movieId) {
+        // Lấy danh sách các ngày có suất chiếu
         List<LocalDate> availableDates = showTimeRepository.findDistinctDatesByMovieIdAndFromToday(movieId, LocalDate.now(), LocalTime.now());
 
         // Format ngày dd/MM
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("dd/MM");
 
-        // Xây dựng danh sách AvailableDateResponse
+        // Sắp xếp ngày tăng dần và xây dựng danh sách AvailableDateResponse
         return availableDates.stream()
+                .sorted() // Sắp xếp theo thứ tự tăng dần
                 .map(date -> {
                     String dayOfWeek = date.equals(LocalDate.now()) ? "Hôm nay" : getDayOfWeekName(date.getDayOfWeek());
                     return AvailableDateResponse.builder()
@@ -89,6 +92,7 @@ public class ShowtimeService {
                 })
                 .collect(Collectors.toList());
     }
+
 
     // Phương thức để lấy tên thứ bằng tiếng Việt
     private String getDayOfWeekName(DayOfWeek dayOfWeek) {
@@ -205,7 +209,8 @@ public class ShowtimeService {
                                         .build())
                         .showtimeResponseList(
                                 showTimeRepository.findByRoomAndDate(room, date)
-                                        .stream().map(showtime ->
+                                        .stream()
+                                        .map(showtime ->
                                                 ShowtimeResponse
                                                         .builder()
                                                         .id(showtime.getId())
@@ -213,7 +218,10 @@ public class ShowtimeService {
                                                         .timeStart(showtime.getTimeStart())
                                                         .timeEnd(showtime.getTimeEnd())
                                                         .isActive(showtime.getIsActive())
-                                                        .build()).toList()
+                                                        .build())
+                                        .sorted(Comparator.comparing(ShowtimeResponse::getTimeStart)) // Sắp xếp theo thời gian bắt đầu
+                                        .toList()
+
                         )
                         .build()
         ).toList();

@@ -19,6 +19,9 @@ public class Room {
     Integer id;
     String name;
 
+    int roww;
+    int coll;
+
     @ManyToOne
     @JoinColumn(name = "room_type_id")
     RoomType roomType;

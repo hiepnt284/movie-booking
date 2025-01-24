@@ -1,5 +1,6 @@
 package com.hiepnt.moviebooking.dto.response;
 
+import jakarta.validation.constraints.Min;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -14,4 +15,6 @@ public class RoomResponse {
     String name;
     String roomTypeName;
     int roomTypeId;
+    int row;
+    int col;
 }

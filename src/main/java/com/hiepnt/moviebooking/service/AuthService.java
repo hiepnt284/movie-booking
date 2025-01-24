@@ -192,10 +192,19 @@ public class AuthService {
                 .build();
         tokenRepository.save(storedToken);
 
+        var userRes = userMapper.toUserResponse(user);
+        if(user.getTheater()!=null){
+            userRes.setTheaterId(user.getTheater().getId());
+        }else{
+            userRes.setTheaterId(null);
+        }
+
+        userRes.setIsActive(user.getIsActive());
+
         return LoginRespone.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)
-                .userResponse(userMapper.toUserResponse(user))
+                .userResponse(userRes)
                 .build();
     }
 

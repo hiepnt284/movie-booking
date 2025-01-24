@@ -26,6 +26,9 @@ public class Booking {
 
     LocalDateTime bookingDate;
 
+    int theaterId;
+    int movieId;
+
     @ManyToOne
     @JoinColumn(name = "showtime_id")
     Showtime showtime;

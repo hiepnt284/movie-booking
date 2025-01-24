@@ -40,6 +40,8 @@ public class PaymentService {
 
     FoodRepository foodRepository;
 
+    ShowTimeRepository showTimeRepository;
+
 
 
     @Transactional
@@ -59,11 +61,17 @@ public class PaymentService {
         int userId = bookingRequest.getUserId();
         LocalDateTime bookingDate = LocalDateTime.now();
         int showtimeId = bookingRequest.getShowtimeId();
+        var showtime = showTimeRepository.findById(showtimeId)
+                .orElseThrow(()-> new AppException(ErrorCode.NOT_EXISTED));
+        var theaterId = showtime.getRoom().getTheater().getId();
+        var movieId  = showtime.getMovie().getId();
         String listShowSeatNumber = bookingRequest.getListShowSeatNumber();
         List<FoodBookingRequest> foodBookingRequestList = bookingRequest.getFoodBookingRequestList();
 
 
         Booking booking = Booking.builder()
+                .theaterId(theaterId)
+                .movieId(movieId)
                 .totalPrice(bookingRequest.getTotalPrice())
                 .user(User.builder().id(userId).build())
                 .bookingDate(bookingDate)

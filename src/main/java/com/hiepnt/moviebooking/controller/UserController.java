@@ -1,6 +1,7 @@
 package com.hiepnt.moviebooking.controller;
 
 import com.hiepnt.moviebooking.common.ApiResponse;
+import com.hiepnt.moviebooking.common.PageResponse;
 import com.hiepnt.moviebooking.dto.request.UpdatePasswordDto;
 import com.hiepnt.moviebooking.dto.response.BookingItemResponse;
 import com.hiepnt.moviebooking.dto.response.UserResponse;
@@ -47,6 +48,30 @@ public class UserController {
         return ApiResponse
                 .<List<BookingItemResponse>>builder()
                 .result(userService.getBookingHistory())
+                .build();
+    }
+
+    @GetMapping
+    public ApiResponse<PageResponse<UserResponse>> getAll(
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "5") int pageSize,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction,
+            @RequestParam(required = false) String keyword
+    ){
+        return ApiResponse
+                .<PageResponse<UserResponse>>builder()
+                .result(userService.getAll(page, pageSize, sortBy, direction, keyword))
+                .build();
+    }
+
+    @PatchMapping("/{id}")
+    public ApiResponse<String> changStatus(
+            @PathVariable int id
+    ) {
+        return ApiResponse
+                .<String>builder()
+                .result(userService.changeStatus(id))
                 .build();
     }
 }

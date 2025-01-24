@@ -27,4 +27,7 @@ public class Theater {
     String img;
     @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL, orphanRemoval = true)
     List<Room> rooms;
+
+    @OneToMany(mappedBy = "theater", cascade = CascadeType.ALL, orphanRemoval = true)
+    List<User> users;
 }

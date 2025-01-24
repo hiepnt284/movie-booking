@@ -40,8 +40,8 @@ public class Showtime {
     @OneToMany(mappedBy = "showtime", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ShowSeat> showSeats;
 
-//    @OneToMany(mappedBy = "showtime", cascade = CascadeType.ALL, orphanRemoval = true)
-//    private List<Booking> bookings;
+    @OneToMany(mappedBy = "showtime", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Booking> bookings;
 
 
 

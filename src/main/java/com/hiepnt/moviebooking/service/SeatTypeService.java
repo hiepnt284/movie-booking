@@ -18,9 +18,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-@Service
-@RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
+    @Service
+    @RequiredArgsConstructor
+    @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class SeatTypeService {
     SeatTypeRepository seatTypeRepository;
     SeatTypeMapper seatTypeMapper;
